@@ -1,0 +1,702 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package cs300_project2;
+
+import javafx.application.Application; 
+import javafx.scene.Scene; 
+import javafx.scene.layout.*; 
+import javafx.stage.Stage; 
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.text.Text;
+import java.util.LinkedList;
+import java.util.Stack;
+import javafx.geometry.Bounds;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+
+public class CS300_Project2 extends Application {
+    static int size = 0;
+    static Text result;
+    static int qSize = 0;
+    static int sSize = 0;
+    static int x=710;
+    static int y=450;
+    static int q=710;
+    static int r=450;
+    
+    @Override
+    public void start(Stage primaryStage) {
+        TabPane root = new TabPane();
+        root.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        Tab[] tabs = new Tab[3];
+        tabs[0] = new Tab("Linked List");
+        tabs[1] = new Tab("Stack");
+        tabs[2] = new Tab("Queue");
+        
+        for (int i=0; i<tabs.length; i++){
+            root.getTabs().add(tabs[i]);   
+        }
+        linkedListPane(tabs[0]);
+        stackPane(tabs[1]);
+        queuePane(tabs[2]);
+        
+        Scene scene = new Scene(root, 1500, 950);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+    public static void main(String[] args) {
+        
+        launch(args);
+    }
+    public static void addElements(
+            Pane pane, Button[] buttons, 
+            TextField[] textFields, Rectangle border, 
+            TextField modify, Text result){
+        
+        pane.getChildren().add(result);
+        pane.getChildren().add(border);
+        border.setFill(Color.TRANSPARENT);
+        border.setStroke(Color.BLACK);
+        
+        
+        int distance = 60;
+        for (int i=0; i<buttons.length; i++){
+            pane.getChildren().add(buttons[i]);
+            pane.getChildren().add(textFields[i]);
+            buttons[i].setMaxWidth(75);
+            buttons[i].setMinWidth(90);
+            if (buttons[i].equals(buttons[0]) && textFields[i].equals(textFields[0])){
+                buttons[i].relocate(10, 800);
+                textFields[i].relocate(distance + 50, 800);
+            }
+            else{
+                buttons[i].relocate((distance += 300), 800);
+                textFields[i].relocate(distance + 100, 800);
+                if (textFields[i].equals(textFields[3])){
+                    Text modifyLabel1 = new Text("Node to change");
+                    Text modifyLabel2 = new Text("New Value");
+                    pane.getChildren().add(modifyLabel1);
+                    pane.getChildren().add(modifyLabel2);
+                    pane.getChildren().add(modify);
+                    modify.relocate(getTextFieldX(textFields[3]),850);
+                    modifyLabel1.relocate(getTextFieldX(textFields[3]), 775);
+                    modifyLabel2.relocate(getTextFieldX(modify), 825);
+                }
+            }
+        }    
+    }
+    public static void linkedListPane(Tab tab){
+        Text result = new Text();
+        result.relocate(750, 900);
+        Pane linkedListPane = new Pane();
+        linkedListPane.setStyle("-fx-background-color: white");
+        Rectangle border = new Rectangle(10, 10, 1480, 700);
+        Button[] buttons = new Button[5];
+        TextField modify = new TextField();
+        TextField[] textFields = new TextField[5];
+        for (int i=0; i<buttons.length; i++){
+            buttons[i] = new Button();
+            textFields[i] = new TextField();
+        }
+        buttons[0].setText("Add");
+        buttons[1].setText("Remove");
+        buttons[2].setText("Search");
+        buttons[3].setText("Modify");
+        buttons[4].setText("Input Array");
+        
+        addElements(linkedListPane, buttons, textFields, border, modify, result);
+        Image tail=null;
+        try{
+            tail = new Image(new FileInputStream("Tail.png"));
+            
+        }
+        catch(FileNotFoundException ex){
+        }
+        ImageView tailImgV = new ImageView(tail);
+        linkedListPane.getChildren().add(tailImgV);
+        tailImgV.setVisible(false);
+        
+        LinkedList<Text> textList = new LinkedList<Text>();
+        LinkedList<ImageView> imgViewList = new LinkedList<ImageView>();
+        
+        buttons[0].setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                String value = textFields[0].getText();
+                Text t = new Text(value);
+                tailImgV.setVisible(true);
+                try{
+                    Image img = new Image(new FileInputStream("node.png"));
+                    ImageView imgV = new ImageView(img);
+                    addLinkedNode(linkedListPane,t,imgV, tailImgV);
+                    textList.add(t);
+                    imgViewList.add(imgV);
+                    result.setText(textList.get(size).getText() +
+                            " added to list");
+                    size++;     
+                }
+                catch(FileNotFoundException ex){    
+                }   
+            }
+        });
+        buttons[1].setOnAction(new EventHandler<ActionEvent>(){
+            @Override
+            public void handle(ActionEvent e){
+                double tailImgX = getImgX(tailImgV);
+
+                String textToRemove= textFields[1].getText();
+
+                for (int i=0; i<textList.size();i++){
+                    String textFromList = textList.get(i).getText();
+
+                    if (textToRemove.equals(textFromList)){
+                        textList.get(i).setText("");
+                        linkedListPane.getChildren().remove(imgViewList.get(i));
+                        tailImgV.relocate(tailImgX -= 100, 250);
+                        result.setText("Value " +textToRemove+ 
+                                " removed from list");
+                        size--;
+                        
+                        int index = imgViewList.indexOf(imgViewList.get(i));
+                        for (int j=index+1; j<textList.size(); j++){
+                            double imgX = getImgX(imgViewList.get(j));
+                            double y = 345;
+                            imgViewList.get(j).relocate(imgX -= 100, y);
+                            textList.get(j).relocate(imgX+25, y+15);
+                        }
+                        break;
+                    }
+                    else{
+                        result.setText("Value " +textToRemove+
+                                " not found in list");
+                    }
+                }
+            }
+        });
+        buttons[2].setOnAction(new EventHandler<ActionEvent>(){
+            @Override
+            public void handle(ActionEvent e){
+                String value = textFields[2].getText();
+                for (int i=0; i<textList.size(); i++){
+                    String textFromList = textList.get(i).getText();
+                    if (value.equals(textFromList)){
+                        result.setText("Value: " +value+ " found in list at index" +i);
+                        break;
+                    }
+                    else{
+                        result.setText("Value: " +value+ " NOT found in list");
+                    }
+                }
+            }
+        });
+        buttons[3].setOnAction(new EventHandler<ActionEvent>(){
+            @Override
+            public void handle(ActionEvent e){
+                String nodeToModify = textFields[3].getText();
+                String newValue = modify.getText();
+                for (int i=0; i<textList.size(); i++){
+                    String textFromList = textList.get(i).getText();
+                    if (nodeToModify.equals(textFromList)){
+                        textList.get(i).setText(newValue);
+                        result.setText(nodeToModify + " has been changed to" +newValue);
+                    }
+                    else if (!(nodeToModify.equals(textFromList))){
+                        result.setText(nodeToModify + " was not found in list!");
+                    }
+                }
+            }
+        });
+        buttons[4].setOnAction(new EventHandler<ActionEvent>(){
+            @Override
+            public void handle(ActionEvent e){
+               tailImgV.setVisible(true);
+               String str = textFields[4].getText();
+               String[] strArr = str.split(" ");
+               for(int i=0; i<strArr.length; i++){
+                   Text t = new Text(strArr[i]);
+                    try{
+                        Image img = new Image(new FileInputStream("node.png"));
+                        ImageView imgV = new ImageView(img);
+                        addLinkedNode(linkedListPane,t,imgV, tailImgV);
+                        textList.add(t);
+                        imgViewList.add(imgV);
+                        result.setText(textList.get(size).getText() +
+                                " added to list");
+                        size++;     
+                    }
+                    catch(FileNotFoundException ex){    
+                    } 
+               }
+            }
+        });
+        tab.setContent(linkedListPane);
+    }
+    //Initializes buttons, and calls "Add Elements function to add them
+    //Gives all the buttons functions when clicked.
+    public static void stackPane(Tab tab){
+        Pane stackPane = new Pane();
+        stackPane.setStyle("-fx-background-color: white");
+        Rectangle border = new Rectangle(10, 10, 1480, 700);
+        Button[] buttons = new Button[5];
+        TextField modify = new TextField();
+        TextField[] textFields = new TextField[5];
+        for (int i=0; i<buttons.length; i++){
+            buttons[i] = new Button();
+            textFields[i] = new TextField();
+        }
+        buttons[0].setText("Add");
+        buttons[1].setText("Add list");
+        buttons[2].setText("Remove");
+        buttons[3].setText("Modify");
+        buttons[4].setText("Search");
+        addElements(stackPane, buttons, textFields, border, modify, null);
+        LinkedList<Text> textList = new LinkedList<>();
+        LinkedList<ImageView> imgViewList = new LinkedList<>();
+        LinkedList<Integer> in=new LinkedList<>();
+        
+        //This button takes the user input, and calls the addStackNode function to add the element
+        //To the pane
+        buttons[0].setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                String value = textFields[0].getText();
+                in.add(Integer.parseInt(value));
+                Text t = new Text(value);
+                try{
+                    Image img = new Image(new FileInputStream("stack1.png"));
+                    
+                    ImageView imgV = new ImageView(img);
+                    addStackNode(stackPane,t,imgV, size);
+                    textList.add(t);
+                    imgViewList.add(imgV);
+                    size++;     
+                }
+                catch(FileNotFoundException ex){    
+                }   
+            }
+        });
+        
+        //Takes multiple inputs, and inputs them into the stack using a for loop and the addStackNode
+        //Function
+        buttons[1].setOnAction(new EventHandler<ActionEvent>(){
+            @Override
+            public void handle(ActionEvent e){
+                String value = textFields[1].getText();
+                String num="";
+                for(int i=0;i<value.length();i++){
+                    char temp=value.charAt(i);
+                    if(Character.isDigit(temp)){
+                        
+                        num+=temp;
+                    }
+                    else if((!Character.isDigit(temp)&&num.length()!=0)){
+                        in.add(Integer.parseInt(num));
+                        Text t=new Text(num);
+                        try{
+                            Image img = new Image(new FileInputStream("stack1.png"));
+                            ImageView imgV = new ImageView(img);
+                            addStackNode(stackPane,t,imgV, size);
+                            textList.add(t);
+                            imgViewList.add(imgV);
+                            size++;     
+                        }
+                        catch(FileNotFoundException ex){    
+                        } 
+                        num="";
+                    }
+                }
+                
+                Text t=new Text(num);
+                    try{
+                        in.add(Integer.parseInt(num));
+                        Image img = new Image(new FileInputStream("stack1.png"));
+
+                        ImageView imgV = new ImageView(img);
+                        addStackNode(stackPane,t,imgV, size);
+                        textList.add(t);
+                        imgViewList.add(imgV);
+                        size++;     
+                    }
+                    catch(FileNotFoundException ex){    
+                    } 
+                    System.out.println(in);                
+            }
+        });
+        
+        
+        //Removes top element
+        buttons[2].setOnAction(new EventHandler<ActionEvent>(){
+            @Override
+            public void handle(ActionEvent e){
+                try{
+                    in.removeLast();
+                    Image white=new Image(new FileInputStream("top1.png"));
+                    ImageView whitev=new ImageView(white);
+                    ImageView whitev1=new ImageView(white);
+                    whitev.setFitHeight(115);
+                    whitev.setFitWidth(125);
+                    whitev1.setFitHeight(30);
+                    whitev1.setFitWidth(20);
+                    whitev.setPreserveRatio(true);
+                    stackPane.getChildren().add(whitev);
+                    stackPane.getChildren().add(whitev1);
+                    whitev.relocate(q, r+5);
+                    whitev1.relocate(q+25, r+95);
+                    r+=50;
+                    Image top = new Image(new FileInputStream("top.png"));
+                    ImageView topv=new ImageView(top);
+                    topv.setFitHeight(100);
+                    topv.setFitWidth(125);
+                    topv.setPreserveRatio(true);
+                    stackPane.getChildren().add(topv);
+                    topv.relocate(q, r);
+            }
+            catch(FileNotFoundException ex){    
+            }
+            }
+        });
+        
+        //Takes two inputs, first  being element to change, and than what to replace it with.
+        //It then removes the specified element, and then replaces it with the new input
+        buttons[3].setOnAction(new EventHandler<ActionEvent>(){
+            @Override
+            public void handle(ActionEvent e){
+
+                try{
+                    int inp=Integer.parseInt(textFields[3].getText());
+                    int index=in.indexOf(inp);
+                    Image white=new Image(new FileInputStream("top1.png"));
+                    ImageView whitev1=new ImageView(white);
+                    whitev1.setFitHeight(30);
+                    whitev1.setFitWidth(20);
+                    stackPane.getChildren().add(whitev1);
+                    whitev1.relocate(q+25, r+(95));
+                    
+                    String value = modify.getText();
+                    Text t = new Text(value);
+                    stackPane.getChildren().add(t);
+                    t.relocate(q+25, r+95);
+                }
+                catch(FileNotFoundException ex){
+                }
+            }
+        });
+        
+        //This button searches the stack for the index of the specified element, and 
+        //then outputs it onto the pane
+        buttons[4].setOnAction(new EventHandler<ActionEvent>(){
+            @Override
+            public void handle(ActionEvent e){
+                int inp=Integer.parseInt(textFields[4].getText());
+                String value=textFields[4].getText()+" is at index "+in.indexOf(inp);
+                Text t = new Text(value);
+                stackPane.getChildren().add(t);
+                t.relocate(710, 200);
+            }
+        });
+    tab.setContent(stackPane);
+    }
+    public static void queuePane(Tab tab){
+        Pane queuePane = new Pane();
+        Text result = new Text();
+        queuePane.setStyle("-fx-background-color: white");
+        result.relocate(750, 900);
+        Rectangle border = new Rectangle(10, 10, 1480, 700);
+        Button[] buttons = new Button[5];
+        TextField modify = new TextField();
+        TextField[] textFields = new TextField[5];
+        for (int i=0; i<buttons.length; i++){
+            buttons[i] = new Button();
+            textFields[i] = new TextField();
+        }
+        buttons[0].setText("Add");
+        buttons[1].setText("Remove");
+        buttons[2].setText("Search");
+        buttons[3].setText("Modify");
+        buttons[4].setText("Input Array");
+        //Adds elemnts to the pane
+        addElements(queuePane, buttons, textFields, border, modify, result);
+        
+        Image tail=null;
+        try{
+            tail = new Image(new FileInputStream("Tail.png"));
+            
+        }
+        catch(FileNotFoundException ex){
+        }
+        ImageView qTailImgV = new ImageView(tail);
+        queuePane.getChildren().add(qTailImgV);
+        //Sets up list to hold items for search and remove
+        LinkedList<Text> queueTextList = new LinkedList<>();
+        LinkedList<ImageView> queueImgViewList = new LinkedList<>();
+        
+        //Add Button
+         buttons[0].setOnAction((ActionEvent e) -> {
+             String value = textFields[0].getText();
+             Text t = new Text(value);
+             try{
+                 Image img = new Image(new FileInputStream("node.png"));
+                 ImageView imgV = new ImageView(img);
+                 addQueueNode(queuePane,t,imgV,qTailImgV);
+                 queueTextList.add(t);
+                 queueImgViewList.add(imgV);
+                 result.setText(queueTextList.get(qSize).getText() +
+                         " added to list");
+                 qSize++;
+             }
+             catch(FileNotFoundException ex){
+             }
+        });
+         
+         // Remove Button - removes last item in list
+        buttons[1].setOnAction((ActionEvent e) -> {
+            double tailImgX = getImgX(qTailImgV);
+            double imgX;
+            queuePane.getChildren().remove(queueImgViewList.getFirst());
+            queuePane.getChildren().remove(queueTextList.getFirst());
+            result.setText(queueTextList.getFirst().getText() +
+                    " removed from list.");
+            for(int i = 1; i < queueTextList.size(); i++){
+                imgX = getImgX(queueImgViewList.get(i));
+                queueImgViewList.get(i).relocate(imgX -= 100, 345);
+                queueTextList.get(i).relocate(imgX + 25, 360);
+            }
+            queueImgViewList.removeFirst();
+            queueTextList.removeFirst();
+            if (qSize > 1)
+                qTailImgV.relocate(tailImgX -= 100, 250);
+            
+            qSize--;
+        });
+        
+        // Search button - searches for element in list
+        buttons[2].setOnAction(new EventHandler<ActionEvent>(){
+            @Override
+            public void handle(ActionEvent e){
+                String value = textFields[2].getText();
+                for (int i=0; i<queueTextList.size(); i++){
+                    String textFromList = queueTextList.get(i).getText();
+                    if (value.equals(textFromList)){
+                        result.setText("Value: " +value+ " found in list at index" +i);
+                        break;
+                    }
+                    else{
+                        result.setText("Value: " +value+ " NOT found in list");
+                    }
+                }
+            }
+        });
+
+        // Modify button - searches for element and replaces it
+        buttons[3].setOnAction(new EventHandler<ActionEvent>(){
+            @Override
+            public void handle(ActionEvent e){
+                String nodeToModify = textFields[3].getText();
+                String newValue = modify.getText();
+                for (int i=0; i<queueTextList.size(); i++){
+                    String textFromList = queueTextList.get(i).getText();
+                    if (nodeToModify.equals(textFromList)){
+                        queueTextList.get(i).setText(newValue);
+                        result.setText(nodeToModify + " has been changed to" +newValue);
+                    }
+                    else if (!(nodeToModify.equals(textFromList))){
+                        result.setText(nodeToModify + " was not found in list!");
+                    }
+                }
+            }
+        });
+        
+        
+       //Array add button - Add multiple items at once
+        buttons[4].setOnAction((ActionEvent e) -> {
+            String qStr = textFields[4].getText();
+            String[] qStrArr = qStr.split(" ");
+            for(int i=0; i<qStrArr.length; i++){
+                Text t = new Text(qStrArr[i]);
+                try{
+                    Image img = new Image(new FileInputStream("node.png"));
+                    ImageView imgV = new ImageView(img);
+                    addQueueNode(queuePane,t,imgV,qTailImgV);
+                    queueTextList.add(t);
+                    queueImgViewList.add(imgV);
+                    result.setText(queueTextList.get(qSize).getText() + " added to list");
+                    qSize++;
+                }
+                catch(FileNotFoundException ex){
+                }
+            }
+        });
+        tab.setContent(queuePane);
+    }
+    public static void addLinkedNode(Pane p,Text t,ImageView imgView,ImageView tailView){
+        int x = 20;
+        int y = 345;
+        int tailVW = 95;
+        int tailVH = 250;
+        
+        try{
+            if (size == 0){
+               
+               imgView.setFitHeight(50);
+               imgView.setFitWidth(100);
+               p.getChildren().add(imgView);
+               imgView.relocate(x, y);
+               
+               Image head = new Image(new FileInputStream("Head.png"));
+               ImageView headView = new ImageView(head);
+               p.getChildren().add(headView);
+               headView.relocate(27, 250);
+               
+               
+               tailView.relocate(tailVW, tailVH);
+                       
+               p.getChildren().add(t);
+               t.relocate(x+25, y+15);
+            }
+            else{
+                imgView.setFitHeight(50);
+                imgView.setFitWidth(100);
+                p.getChildren().add(imgView);
+                imgView.relocate(x += (size*100), y);
+                
+                
+                p.getChildren().add(t);
+                t.relocate(x + 25, y+15);
+                
+                tailView.relocate(tailVW += (size*95), tailVH);
+                
+            }
+        }
+        catch(FileNotFoundException ex){    
+        }
+        
+    }
+    public static void addQueueNode(Pane p,Text t,ImageView imgView,ImageView tailView){
+        int x = 20;
+        int y = 345;
+        int tailVW = 95;
+        int tailVH = 250;
+        
+        try{
+            if (qSize == 0){
+               
+               imgView.setFitHeight(50);
+               imgView.setFitWidth(100);
+               p.getChildren().add(imgView);
+               imgView.relocate(x, y);
+               
+               Image head = new Image(new FileInputStream("Head.png"));
+               ImageView headView = new ImageView(head);
+               p.getChildren().add(headView);
+               headView.relocate(27, 250);
+               
+               
+               tailView.relocate(tailVW, tailVH);
+                       
+               p.getChildren().add(t);
+               t.relocate(x+25, y+15);
+            }
+            else{
+                imgView.setFitHeight(50);
+                imgView.setFitWidth(100);
+                p.getChildren().add(imgView);
+                imgView.relocate(x += (qSize*100), y);
+                
+                
+                p.getChildren().add(t);
+                t.relocate(x + 25, y+15);
+                
+                tailView.relocate(tailVW += (qSize*95), tailVH);
+                
+            }
+        }
+        catch(FileNotFoundException ex){    
+        }
+        
+    }
+    //This method adds the user inputs onto the pane to visualize adding an element
+    public static void addStackNode(Pane p, Text t, ImageView imgView, int size){  
+        try{
+            Image top = new Image(new FileInputStream("top.png"));
+            ImageView topv=new ImageView(top);
+            if (size == 0){
+                imgView.setFitHeight(375);
+                imgView.setFitWidth(350);
+                imgView.setPreserveRatio(true);
+                p.getChildren().add(imgView);
+                imgView.relocate(600, 250);  
+                topv.setFitHeight(100);
+                topv.setFitWidth(125);
+                topv.setPreserveRatio(true);
+                p.getChildren().add(topv);
+                topv.relocate(q, r);
+               
+               p.getChildren().add(t);
+               t.relocate(q+25, r+95);
+            }
+            else{
+                r-=50;
+                Image white=new Image(new FileInputStream("top1.png"));
+                ImageView whitev=new ImageView(white);
+                whitev.setFitHeight(100);
+                whitev.setFitWidth(125);
+                whitev.setPreserveRatio(true);
+                p.getChildren().add(whitev);
+                whitev.relocate(q, r+65);
+                topv.setFitHeight(100);
+                topv.setFitWidth(125);
+                topv.setPreserveRatio(true);
+                topv.relocate(q, r);
+                p.getChildren().add(topv);
+                p.getChildren().add(t);
+                t.relocate(q + 25, r+95);
+                
+            }
+        }
+        catch(FileNotFoundException ex){    
+        }
+    }
+    
+    //This remove the top element when called upon
+    public static void removeNode(Pane p, int size){
+        System.out.println(y);
+        try{
+            Image white=new Image(new FileInputStream("top1.png"));
+            ImageView whitev=new ImageView(white);
+            whitev.setFitHeight(100);
+            whitev.setFitWidth(125);
+            whitev.setPreserveRatio(true);
+            p.getChildren().add(whitev);
+            whitev.relocate(q, r+15);
+        }
+        catch(FileNotFoundException ex){    
+        }
+    }
+    /*
+    Citation for method getX(ImageView V):
+    https://stackoverflow.com/questions/31148690/get-real-position-of-a-node-in-javafx
+    */
+    public static double getImgX(ImageView v){
+        Bounds boundsInScene = v.localToScene(v.getBoundsInLocal());
+        return boundsInScene.getMinX();  
+    }
+    public static double getTextFieldX(TextField tv){
+        Bounds boundsInScene = tv.localToScene(tv.getBoundsInLocal());
+        return boundsInScene.getMinX();
+    }
+    public static double getTextY(Text t){
+        Bounds boundsInScene = t.localToScene(t.getBoundsInLocal());
+        return boundsInScene.getMinY();
+    }
+}
